@@ -69,10 +69,7 @@ def extract_quantity(element):
     return None, None
 
 
-@app.get("/file/{file}")
-def read_item(file: str, q: Union[str, None] = None):
-    model = ifcopenshell.open(file)
-
+def get_model_data_summery(model):
     data = {}
 
     for element in model.by_type("IfcProduct"):
@@ -104,9 +101,50 @@ def read_item(file: str, q: Union[str, None] = None):
                 "Unit": info["unit"],
                 "Project_Total": info["project_total"],
                 "Level": level,
-                'Quantity': qty if q else qty,
+                'Quantity': qty,
             }
         table.append(row)
+    return table
+
+@app.get("/file/{file}")
+def read_item(file: str, q: Union[str, None] = None):
+    model = ifcopenshell.open(file)
+    table = get_model_data_summery(model)
+
+    # data = {}
+
+    # for element in model.by_type("IfcProduct"):
+    #     quantity, unit = extract_quantity(element)
+    #     if quantity is None:
+    #         continue
+
+    #     # Determine type name (row identifier)
+    #     element_type = element.ObjectType or element.Name or element.is_a()
+
+    #     level = get_level(element)
+
+    #     # Initialize if not exists
+    #     if element_type not in data:
+    #         data[element_type] = {
+    #             "unit": unit,
+    #             "project_total": 0.0,
+    #             "levels": {}
+    #         }
+
+    #     # Update totals
+    #     data[element_type]["project_total"] += quantity
+    #     data[element_type]["levels"][level] = data[element_type]["levels"].get(level, 0.0) + quantity
+    # table = []
+    # for element_type, info in data.items():
+    #     for level, qty in info["levels"].items():
+    #         row = {
+    #             "Element_Type": element_type,
+    #             "Unit": info["unit"],
+    #             "Project_Total": info["project_total"],
+    #             "Level": level,
+    #             'Quantity': qty if q else qty,
+    #         }
+    #     table.append(row)
     return {"file": file, "data": table}
 
 
