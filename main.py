@@ -3,7 +3,8 @@ from xml.parsers.expat import model
 import ifcopenshell
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import tempfile
 import shutil
 import os
@@ -13,6 +14,7 @@ import io
 from util import get_level, get_model_data_summery
 
 app = FastAPI()
+
 origins = [
     "http://localhost:5173",
 ]
@@ -23,11 +25,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
 
-@app.get("/file/{file}")
+# Serve index.html at root
+@app.get("/")
+async def read_index():
+    return FileResponse("static/index.html")
+
+@app.get("/api/file/{file}")
 def read_item(file: str, q: Union[str, None] = None):
     model = ifcopenshell.open(file)
     table = get_model_data_summery(model)
@@ -35,11 +39,11 @@ def read_item(file: str, q: Union[str, None] = None):
     return {"file": file, "data": table}
 
 
-@app.get('/object_info/{element_id}/{level}')
+@app.get('/api/object_info/{element_id}/{level}')
 def get_object_info(element_id: str, level: str):
     return {"element_id": element_id, "level": level}
 
-@app.post("/upload_ifc/")
+@app.post("/api/upload_ifc/")
 async def upload_ifc(ifc_file: UploadFile = File(...)) -> Dict:
     if not ifc_file.filename.lower().endswith(".ifc"):
         raise HTTPException(status_code=400, detail="Uploaded file must be .ifc")
@@ -68,7 +72,7 @@ async def upload_ifc(ifc_file: UploadFile = File(...)) -> Dict:
     }
 
 
-@app.post("/get_guids/")
+@app.post("/api/get_guids/")
 async def get_guids(
     element_type: str = Form(...),
     level_name: str = Form(...),
@@ -104,3 +108,6 @@ async def get_guids(
         "guids": guids,
         "count": len(guids)
     }
+
+# Mount static files at the end (must be last to not override API routes)
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
