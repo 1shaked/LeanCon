@@ -1,0 +1,4 @@
+fastapi>=0.95.0
+uvicorn[standard]>=0.22.0
+ifcopenshell>=0.8.3
+python-multipart>=0.0.6
