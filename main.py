@@ -29,10 +29,6 @@ def read_root():
     return {"Hello": "World"}
 
 
-
-
-
-
 def get_level(element):
     """Return level name from spatial containment"""
     try:
@@ -117,48 +113,6 @@ def read_item(file: str, q: Union[str, None] = None):
 @app.get('/object_info/{element_id}/{level}')
 def get_object_info(element_id: str, level: str):
     return {"element_id": element_id, "level": level}
-
-# @app.post("/upload_ifc/")
-# async def upload_ifc(ifc_file: UploadFile = File(...)) -> Dict:
-#     # 2. Save the file temporarily
-#     tmp_dir = tempfile.mkdtemp()
-#     file_path = os.path.join(tmp_dir, ifc_file.filename)
-#     with open(file_path, "wb") as buffer:
-#         shutil.copyfileobj(ifc_file.file, buffer)
-
-#     # 3. Try opening with IfcOpenShell
-#     try:
-#         model = ifcopenshell.open(file_path)
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Failed to open IFC file: {str(e)}")
-
-#     # 4. Extract file schema (header schema line)
-#     schema = None
-#     try:
-#         schema = model.schema()  # returns e.g. "IFC4" or "IFC2X3"
-#     except Exception:
-#         # fallback: inspect header
-#         schema = getattr(model, "schema", None) or "unknown"
-
-#     # 5. Extract all walls (IfcWall) GUIDs
-#     walls = model.by_type("IfcWall")
-#     wall_guids: List[str] = [w.GlobalId for w in walls if hasattr(w, "GlobalId")]
-
-#     # 6. Clean up temp files
-#     try:
-#         ifc_file.file.close()
-#         os.remove(file_path)
-#         os.rmdir(tmp_dir)
-#     except Exception:
-#         pass
-
-#     # 7. Return results
-#     return {
-#         "filename": ifc_file.filename,
-#         "schema": schema,
-#         "wall_count": len(wall_guids),
-#         "wall_guids": wall_guids,
-#     }
 
 @app.post("/upload_ifc/")
 async def upload_ifc(ifc_file: UploadFile = File(...)) -> Dict:
