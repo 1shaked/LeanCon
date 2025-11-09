@@ -1,17 +1,16 @@
 from typing import Union
 from xml.parsers.expat import model
 import ifcopenshell
-import ifcopenshell.util.element
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.responses import JSONResponse
 import tempfile
-import ifcopenshell
 import shutil
 import os
 from typing import List, Dict
-from fastapi import FastAPI
 import io
+
+from util import get_level, get_model_data_summery
 
 app = FastAPI()
 origins = [
@@ -27,80 +26,6 @@ app.add_middleware(
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
-
-
-def get_level(element):
-    """Return level name from spatial containment"""
-    try:
-        for rel in element.ContainedInStructure:
-            storey = rel.RelatingStructure
-            if storey and storey.is_a("IfcBuildingStorey"):
-                return storey.Name
-    except:
-        pass
-    return "UNKNOWN"
-
-def extract_quantity(element):
-    """Return (quantity_value, unit_string) or (None, None)"""
-    qtos = ifcopenshell.util.element.get_psets(element, qtos_only=True)
-
-    # The most common quantity set for structural elements:
-    q = qtos.get("Qto_ColumnBaseQuantities", {}) \
-        or qtos.get("Qto_BeamBaseQuantities", {}) \
-        or qtos.get("Qto_WallBaseQuantities", {}) \
-        or qtos.get("Qto_SlabBaseQuantities", {})
-
-    # Priority: Volume → Area → Length
-    if "GrossVolume" in q:
-        return q["GrossVolume"], "m³"
-    if "NetVolume" in q:
-        return q["NetVolume"], "m³"
-    if "CrossSectionArea" in q:
-        return q["CrossSectionArea"], "m²"
-    if "OuterSurfaceArea" in q:
-        return q["OuterSurfaceArea"], "m²"
-    if "Length" in q:
-        return q["Length"], "m"
-    
-    return None, None
-
-
-def get_model_data_summery(model):
-    data = {}
-
-    for element in model.by_type("IfcProduct"):
-        quantity, unit = extract_quantity(element)
-        if quantity is None:
-            continue
-
-        # Determine type name (row identifier)
-        element_type = element.ObjectType or element.Name or element.is_a()
-
-        level = get_level(element)
-
-        # Initialize if not exists
-        if element_type not in data:
-            data[element_type] = {
-                "unit": unit,
-                "project_total": 0.0,
-                "levels": {}
-            }
-
-        # Update totals
-        data[element_type]["project_total"] += quantity
-        data[element_type]["levels"][level] = data[element_type]["levels"].get(level, 0.0) + quantity
-    table = []
-    for element_type, info in data.items():
-        for level, qty in info["levels"].items():
-            row = {
-                "Element_Type": element_type,
-                "Unit": info["unit"],
-                "Project_Total": info["project_total"],
-                "Level": level,
-                'Quantity': qty,
-            }
-            table.append(row)
-    return table
 
 @app.get("/file/{file}")
 def read_item(file: str, q: Union[str, None] = None):
