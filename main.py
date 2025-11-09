@@ -42,7 +42,7 @@ def get_level(element):
                 return storey.Name
     except:
         pass
-    return "No Level"
+    return "UNKNOWN"
 
 def extract_quantity(element):
     """Return (quantity_value, unit_string) or (None, None)"""
@@ -187,13 +187,6 @@ async def upload_ifc(ifc_file: UploadFile = File(...)) -> Dict:
         "file": ifc_file.filename,
         'table': get_model_data_summery(model)
     }
-
-def get_level(element):
-    for rel in getattr(element, "ContainedInStructure", []):
-        storey = rel.RelatingStructure
-        if storey and storey.is_a("IfcBuildingStorey"):
-            return storey.Name
-    return None
 
 
 @app.post("/get_guids/")
