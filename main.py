@@ -103,7 +103,7 @@ def get_model_data_summery(model):
                 "Level": level,
                 'Quantity': qty,
             }
-        table.append(row)
+            table.append(row)
     return table
 
 @app.get("/file/{file}")
