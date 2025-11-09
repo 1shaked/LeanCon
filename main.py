@@ -9,7 +9,6 @@ import tempfile
 import shutil
 import os
 from typing import List, Dict
-import io
 
 from util import get_level, get_model_data_summery
 
